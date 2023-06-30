@@ -11,29 +11,30 @@
 (cache/defcache RedisCache [$]
   cache/CacheProtocol
   (lookup [_ item]
-    (delay (wcar* $ (car/get (key-for $ item)))))
+          (wcar* $ (car/get (key-for $ item))))
 
   (lookup [_ item not-found]
-    (delay (or (wcar* $ (car/get (key-for $ item))) not-found)))
+          (or (wcar* $ (car/get (key-for $ item))) not-found))
 
   (has? [_ item]
-    (= 1 (wcar* $ (car/exists (key-for $ item)))))
+        (= 1 (wcar* $ (car/exists (key-for $ item)))))
 
   (hit [_ item]
-    (RedisCache. $))
+       (RedisCache. $))
 
   (miss [_ item val]
-    (let [args (when-let [t (:ttl $)] ["ex" t])
-          val (if (delay? val) @val val)]
-      (wcar* $ (apply car/set (key-for $ item) (car/freeze @val) args)))
-    (RedisCache. $))
+        (let [args (when-let [t (:ttl $)] ["ex" t])
+              val (if (delay? val) @val val)]
+
+          (wcar* $ (apply car/set (key-for $ item) (car/freeze val) args)))
+        (RedisCache. $))
 
   (evict [_ item]
-    (wcar* $ (car/del (key-for $ item)))
-    (RedisCache. $))
+         (wcar* $ (car/del (key-for $ item)))
+         (RedisCache. $))
 
   (seed [_ base]
-    (RedisCache. base))
+        (RedisCache. base))
 
   Object
   (toString [_] (str $)))
